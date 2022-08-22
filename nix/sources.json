@@ -1,0 +1,38 @@
+{
+    "gomod2nix": {
+        "branch": "master",
+        "description": "Convert applications using Go modules to Nix expressions",
+        "homepage": null,
+        "owner": "tweag",
+        "repo": "gomod2nix",
+        "rev": "b8c2216317cd23e4f49f1235c27522604be60349",
+        "sha256": "04pky7756ccgmc5hxa9y7ghm014lh4xyw5593yh1mkqmaphjgjgf",
+        "type": "tarball",
+        "url": "https://github.com/tweag/gomod2nix/archive/b8c2216317cd23e4f49f1235c27522604be60349.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "gotrue": {
+        "branch": "master",
+        "description": "A JWT based API for managing users and issuing JWT tokens",
+        "homepage": "https://supabase.com/docs/guides/auth",
+        "owner": "supabase",
+        "repo": "gotrue",
+        "rev": "500fdc2e351bd7e3929e7ff3ba74e02b676d25bb",
+        "sha256": "1r64x34908yffysqblnkadzzsjqmk7q3v306nyx68jf1kqcr4crs",
+        "type": "tarball",
+        "url": "https://github.com/supabase/gotrue/archive/500fdc2e351bd7e3929e7ff3ba74e02b676d25bb.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nixpkgs": {
+        "branch": "master",
+        "description": "Nix Packages collection",
+        "homepage": "",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "b8a9c06d7b40ec3981abab9af48507e70ff8d29c",
+        "sha256": "0278g5yab86n5r6ym95ld83ls14mkhrllxm69jp6xx9hk35vfim7",
+        "type": "tarball",
+        "url": "https://github.com/NixOS/nixpkgs/archive/b8a9c06d7b40ec3981abab9af48507e70ff8d29c.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    }
+}
