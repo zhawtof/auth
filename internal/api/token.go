@@ -173,7 +173,7 @@ func (a *API) Token(w http.ResponseWriter, r *http.Request) error {
 		return a.RefreshTokenGrant(ctx, w, r)
 	case "id_token":
 		return a.IdTokenGrant(ctx, w, r)
-	case "oauth_pkce":
+	case "pkce":
 		return a.OAuthPKCE(ctx, w, r)
 	default:
 		return oauthError("unsupported_grant_type", "")
