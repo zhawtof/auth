@@ -179,16 +179,14 @@ func (a *API) verifyGet(w http.ResponseWriter, r *http.Request, params *VerifyPa
 		}
 		if isImplicitFlow(flowType) {
 			token, terr = a.issueRefreshToken(ctx, tx, user, models.OTP, grantParams)
-
 			if terr != nil {
 				return terr
 			}
-
 			if terr = a.setCookieTokens(config, token, false, w); terr != nil {
 				return internalServerError("Failed to set JWT cookie. %s", terr)
 			}
 		} else if isPKCEFlow(flowType) {
-			if authCode, terr = issueAuthCode(tx, user, a.config.External.FlowStateExpiryDuration, authenticationMethod); terr != nil {
+			if authCode, terr = issueAuthCode(tx, user, authenticationMethod); terr != nil {
 				return badRequestError("No associated flow state found. %s", terr)
 			}
 		}
