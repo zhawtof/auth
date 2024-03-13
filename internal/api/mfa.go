@@ -16,6 +16,7 @@ import (
 	"github.com/supabase/auth/internal/models"
 	"github.com/supabase/auth/internal/storage"
 	"github.com/supabase/auth/internal/utilities"
+	"github.com/go-webauthn/webauthn"
 )
 
 const DefaultQRSize = 3
@@ -352,4 +353,20 @@ func (a *API) UnenrollFactor(w http.ResponseWriter, r *http.Request) error {
 	return sendJSON(w, http.StatusOK, &UnenrollFactorResponse{
 		ID: factor.ID,
 	})
+}
+
+func (a *API) WebauthnRegister(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func (a *API) WebauthnAuthenticate(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func (a *API) WebauthnAuthenticateStart(w http.ResponseWriter, r *http.Request) error {
+	return nil
 }

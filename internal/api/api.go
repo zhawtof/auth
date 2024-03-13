@@ -222,6 +222,17 @@ func NewAPIWithVersion(ctx context.Context, globalConfig *conf.GlobalConfigurati
 				r.Delete("/", api.UnenrollFactor)
 
 			})
+			r.Route("/webauthn", func(r *router) {
+				r.Route("/register", func(r *router) {
+					r.Post("/", api.WebauthnRegister)
+					r.Post("/register", api.WebauthnRegisterStart)
+				})
+				r.Route("/authenticate", func(r *router) {
+					r.Post("/", api.WebauthnAuthenticate)
+					r.Post("/register", api.WebauthnAuthenticateStart)
+
+				})
+			})
 		})
 
 		r.Route("/sso", func(r *router) {
