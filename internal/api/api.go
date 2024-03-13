@@ -224,12 +224,12 @@ func NewAPIWithVersion(ctx context.Context, globalConfig *conf.GlobalConfigurati
 			})
 			r.Route("/webauthn", func(r *router) {
 				r.Route("/register", func(r *router) {
-					r.Post("/", api.WebauthnRegister)
-					r.Post("/register", api.WebauthnRegisterStart)
+					r.Post("/begin", api.WebauthnRegisterStart)
+					r.Post("/end", api.WebauthnRegisterStart)
 				})
 				r.Route("/authenticate", func(r *router) {
-					r.Post("/", api.WebauthnAuthenticate)
-					r.Post("/register", api.WebauthnAuthenticateStart)
+					r.Post("/begin", api.WebauthnAuthenticateStart)
+					r.Post("/end", api.WebauthnAuthenticateEnd)
 
 				})
 			})

@@ -27,6 +27,7 @@ type EnrollFactorParams struct {
 	Issuer       string `json:"issuer"`
 }
 
+
 type TOTPObject struct {
 	QRCode string `json:"qr_code"`
 	Secret string `json:"secret"`
@@ -355,18 +356,43 @@ func (a *API) UnenrollFactor(w http.ResponseWriter, r *http.Request) error {
 	})
 }
 
-func (a *API) WebauthnRegister(w http.ResponseWriter, r *http.Request) error {
-	return nil
+type WebauthnRegisterStartParams struct {
+	// user_id
+	// domain
+	// return_passkey_credential_options
 }
+
+type WebauthnRegisterEndParams struct {
+	// user_id
+	// primary_key
+}
+
+type WebauthnAuthenticateStartParams struct {
+	// user_id
+	// domain
+	// return_passkey_credential_options
+}
+
+type WebauthnAuthenticateEndParams struct {
+	// public_key_credential
+}
+
+
+
 
 func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) error {
+
 	return nil
 }
 
-func (a *API) WebauthnAuthenticate(w http.ResponseWriter, r *http.Request) error {
+func (a *API) WebauthnRegisterEnd(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (a *API) WebauthnAuthenticateStart(w http.ResponseWriter, r *http.Request) error {
+func (a *API) WebauthnAuthenticateStart(aw http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func (a *API) WebauthnAuthenticateEnd(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
