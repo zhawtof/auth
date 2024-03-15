@@ -9,6 +9,7 @@ import (
 	"github.com/aaronarduino/goqrsvg"
 	svg "github.com/ajstarks/svgo"
 	"github.com/boombuler/barcode/qr"
+	"github.com/go-webauthn/webauthn"
 	"github.com/gofrs/uuid"
 	"github.com/pquerna/otp/totp"
 	"github.com/supabase/auth/internal/hooks"
@@ -16,7 +17,6 @@ import (
 	"github.com/supabase/auth/internal/models"
 	"github.com/supabase/auth/internal/storage"
 	"github.com/supabase/auth/internal/utilities"
-	"github.com/go-webauthn/webauthn"
 )
 
 const DefaultQRSize = 3
@@ -26,7 +26,6 @@ type EnrollFactorParams struct {
 	FactorType   string `json:"factor_type"`
 	Issuer       string `json:"issuer"`
 }
-
 
 type TOTPObject struct {
 	QRCode string `json:"qr_code"`
@@ -357,30 +356,44 @@ func (a *API) UnenrollFactor(w http.ResponseWriter, r *http.Request) error {
 }
 
 type WebauthnRegisterStartParams struct {
-	// user_id
-	// domain
-	// return_passkey_credential_options
+	UserID                         uuid.UUID `json:"user_id"`
+	Domain                         string    `json:"domain"`
+	ReturnPasskeyCredentialOptions string    `json:"return_passkey_credential_options"`
 }
 
 type WebauthnRegisterEndParams struct {
-	// user_id
-	// primary_key
+	UserID    uuid.UUID `json:"user_id"`
+	PublicKey string    `json:"public_key"`
 }
 
 type WebauthnAuthenticateStartParams struct {
-	// user_id
-	// domain
-	// return_passkey_credential_options
+	UserID                         uuid.UUID `json:"user_id"`
+	Domain                         string    `json:"domain"`
+	ReturnPasskeyCredentialOptions string    `json:"return_passkey_credential_options"`
 }
 
 type WebauthnAuthenticateEndParams struct {
-	// public_key_credential
+	PublicKey string `json:"public_key"`
 }
 
-
-
-
 func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	user := getUser(ctx)
+	var (
+		webAuthn *webauthn.WebAuthn
+		err      error
+	)
+
+	// This should go on the enabled or disabled toggle
+	wconfig := &webauthn.Config{
+		RPDisplayName: "Go Webauthn",                               // Display Name for your site
+		RPID:          "go-webauthn.local",                         // Generally the FQDN for your site
+		RPOrigins:     []string{"https://login.go-webauthn.local"}, // The origin URLs allowed for WebAuthn requests
+	}
+	options, session, err := webAuthn.BeginRegistration(user)
+	if webAuthn, err = webauthn.New(wconfig); err != nil {
+		fmt.Println(err)
+	}
 
 	return nil
 }
