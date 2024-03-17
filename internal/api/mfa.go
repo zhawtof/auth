@@ -9,7 +9,6 @@ import (
 	"github.com/aaronarduino/goqrsvg"
 	svg "github.com/ajstarks/svgo"
 	"github.com/boombuler/barcode/qr"
-	"github.com/go-webauthn/webauthn"
 	"github.com/gofrs/uuid"
 	"github.com/pquerna/otp/totp"
 	"github.com/supabase/auth/internal/hooks"
@@ -376,36 +375,86 @@ type WebauthnAuthenticateEndParams struct {
 	PublicKey string `json:"public_key"`
 }
 
+type WebauthnRegisterStartResponse struct {
+	// TBD
+}
+
+type WebauthnRegisterFinishResponse struct {
+	// TBD
+}
+
+type WebauthnLoginStartResponse struct {
+	// TBD
+}
+
+type WebauthnLoginFinishResponse struct {
+	// TBD
+}
+
 func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	user := getUser(ctx)
-	var (
-		webAuthn *webauthn.WebAuthn
-		err      error
-	)
+	// ctx := r.Context()
+	// user := getUser(ctx)
 
-	// This should go on the enabled or disabled toggle
-	wconfig := &webauthn.Config{
-		RPDisplayName: "Go Webauthn",                               // Display Name for your site
-		RPID:          "go-webauthn.local",                         // Generally the FQDN for your site
-		RPOrigins:     []string{"https://login.go-webauthn.local"}, // The origin URLs allowed for WebAuthn requests
-	}
-	options, session, err := webAuthn.BeginRegistration(user)
-	if webAuthn, err = webauthn.New(wconfig); err != nil {
-		fmt.Println(err)
-	}
+	// webAuthn := a.config.MFA.WebauthnConfiguration.Webauthn
 
-	return nil
+	// if params.ReturnPassKeyCredentialOptions {
+	// authSelect := protocol.AuthenticatorSelection{
+	//	AuthenticatorAttachment: protocol.AuthenticatorAttachment("platform"),
+	//	RequireResidentKey: protocol.ResidentKeyNotRequired(),
+	//	UserVerification: protocol.VerificationRequired,
+	//	 	opts, session, err := webAuthn.BeginRegistration(user, webauthn.WithAuthenticatorSelection(authSelect), webauthn.WithConveyancePreference(conveyancePref))
+	// conveyancePref := protocol.PreferNoAttestation
+
+	//}
+	// else {
+	// options, session, err := webAuthn.BeginRegistration(user)
+	// if err != nil {
+	// 	return err
+	// }
+	//}
+
+	// Updating the ConveyencePreference options.
+	// See the struct declarations for values
+	// }
+
+	return sendJSON(w, http.StatusOK, &WebauthnRegisterStartResponse{})
 }
 
 func (a *API) WebauthnRegisterEnd(w http.ResponseWriter, r *http.Request) error {
+	// ctx := r.Context()
+	// user := getUser(ctx)
+	// credential, err := webAuthn.FinishRegistration(user, session, r)
+	// if err != nil {
+	// return err
+	// }
+	// TODO: Credate New Factor in transaction
 	return nil
 }
 
 func (a *API) WebauthnAuthenticateStart(aw http.ResponseWriter, r *http.Request) error {
+	// ctx := r.Context()
+	// user := getUser(ctx)
+	// Check that factor exists, and is verified
+	// options, session, err := webAuthn.BeginLogin(user)
+	// if err != nil {
+	// 	// Handle Error and return.
+	// 	 Allowlist can be added here
+
+	// 	return err
+	// }
 	return nil
 }
 
 func (a *API) WebauthnAuthenticateEnd(w http.ResponseWriter, r *http.Request) error {
+	// ctx := r.Context()
+	// user := getUser(ctx)
+	// Check that factor exists and is verified
+	// options, session, err := webAuthn.FinishLogin(user)
+	// if err != nil {
+	// 	// Handle Error and return.
+	// 	return err
+	// }
+	// Update Factor here
+	// Update the AAL level depending on passkey or non passkey
 	return nil
 }
