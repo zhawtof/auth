@@ -406,7 +406,7 @@ func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) erro
 
 	// if user has duplicate friendly name check then raise error
 	webAuthn := a.config.MFA.Webauthn.Webauthn
-	// ipAddress := utilities.GetIPAddress(r)
+	ipAddress := utilities.GetIPAddress(r)
 
 	// if params.ReturnPassKeyCredentialOptions {
 	// authSelect := protocol.AuthenticatorSelection{
@@ -418,27 +418,34 @@ func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) erro
 
 	//}
 	// else {
-	options, _, err := webAuthn.BeginRegistration(user)
+	options, session, err := webAuthn.BeginRegistration(user)
 	if err != nil {
 		return err
 	}
-	// ws := &models.WebauthnSession{
-	// 	SessionData: session,
-	// }
+	ws := &models.WebauthnSession{
+		SessionData: session,
+	}
 	// Open transaction
 	// TODO: Pass in friendly name
-	// factor := models.NewFactor(user,"myfriendlyname", "webauthn", models.FactorStateUnverified, "")
-	// Create Challenge
-	// challenge := ws.ToChallenge(factor.ID, ipAddress)
-	// Save Factor And Challenge
-	// We should extract the session into a challenge
-	//}
+	err = a.db.Transaction(func(tx *storage.Connection) error {
+		factor := models.NewFactor(user, "myfriendlyname", "webauthn", models.FactorStateUnverified, "")
+		// Create Challenge
+		challenge := ws.ToChallenge(factor.ID, ipAddress)
+		if terr := tx.Create(factor); err != nil {
+			return terr
+		}
+		if terr := tx.Create(challenge); terr != nil {
+			return terr
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 
 	// Updating the ConveyencePreference options.
 	// See the struct declarations for values
 	// }
-	// Create a temporary factor which is unverified
-	// Create the challenge
 
 	return sendJSON(w, http.StatusOK, &WebauthnRegisterStartResponse{
 		PublicKeyCredentialRequestOptions: options,
@@ -448,16 +455,20 @@ func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) erro
 func (a *API) WebauthnRegisterEnd(w http.ResponseWriter, r *http.Request) error {
 	// ctx := r.Context()
 	// user := getUser(ctx)
-	// Maybe explicitly fetch the factor
-	// webauthn/enroll/
-	// webauthn/<factor_id>/
-	// webAuthn := a.config.MFA.WebauthnConfiguration.Webauthn
+	// factor := getFactor(ctx)
+	// if factor.FactorType != "webauthn" {
+	// 	return internalServerError("webautnn only")
+	// }
+	// TODO: Probably add some factor checks here
+	// webAuthn := a.config.MFA.Webauthn.Webauthn
+	// challenge := models.FindChallengeByID(a.db, params.ChallengeID)
+	// s
 	// session := challenge.ToSession()
 	// credential, err := webAuthn.FinishRegistration(user, session, r)
 	// if err != nil {
 	// return err
 	// }
-	// TODO: Credate New Factor in transaction
+	// TODO: update factor state to verified in a
 	return nil
 }
 

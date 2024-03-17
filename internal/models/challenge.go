@@ -17,6 +17,10 @@ type Challenge struct {
 	VerifiedAt *time.Time `json:"verified_at,omitempty" db:"verified_at"`
 	IPAddress  string     `json:"ip_address" db:"ip_address"`
 	Factor     *Factor    `json:"factor,omitempty" belongs_to:"factor"`
+	// TODO: Change these into enum maybe
+	ChallengeType     string `json:"challenge_type"`
+	WebauthnChallenge string `json:"webauthn_challenge"`
+	UserVerification  string `json:"user_verification"`
 }
 
 func (Challenge) TableName() string {
@@ -91,9 +95,10 @@ func (ws *WebauthnSession) ToChallenge(factorID uuid.UUID, ipAddress string) *Ch
 		ID:        id,
 		FactorID:  factorID,
 		IPAddress: ipAddress,
-		// 		// TODO: Have the user specify this and add as param to fn
-		// 		// ChallengeType: "webauthn_registration",
-		// 		 WebauthnChallenge: ws.Challenge,
+		// TODO: Have the user specify this and add as param to fn
+		ChallengeType:     "webauthn_registration",
+		UserVerification:  "preferred",
+		WebauthnChallenge: ws.Challenge,
 	}
 
 }

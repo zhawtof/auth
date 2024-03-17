@@ -605,9 +605,7 @@ func LoadGlobal(filename string) (*GlobalConfiguration, error) {
 		return nil, err
 	}
 
-	fmt.Println("before config")
 	if config.MFA.Enabled && config.MFA.Webauthn.Enabled {
-		fmt.Println("COnfigu enalled")
 		if err := config.MFA.Webauthn.PopulateWebauthnConfiguration(); err != nil {
 			return nil, err
 		}
