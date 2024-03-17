@@ -383,6 +383,7 @@ type WebauthnRegisterStartResponse struct {
 	// TODO: Fix the type
 	PublicKeyCredentialRequestOptions *protocol.CredentialCreation `json:"public_key_credential_request_options"`
 	ChallengeID                       uuid.UUID                    `json:"challenge_id"`
+	FactorID                          uuid.UUID                    `json:"factor_id"`
 	// TBD
 }
 
@@ -441,11 +442,11 @@ func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) erro
 	// if user.HasExistingWebauthnFactor {
 	// }
 	// Open transaction
+	factor := models.NewFactor(user, params.FriendlyName, "webauthn", models.FactorStateUnverified, "")
+	challenge := ws.ToChallenge(factor.ID, ipAddress, "webauthn_registration")
 	err = a.db.Transaction(func(tx *storage.Connection) error {
 
-		factor := models.NewFactor(user, params.FriendlyName, "webauthn", models.FactorStateUnverified, "")
 		// }
-		challenge := ws.ToChallenge(factor.ID, ipAddress, "webauthn_registration")
 		if terr := tx.Create(factor); err != nil {
 			return terr
 		}
@@ -464,6 +465,8 @@ func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) erro
 
 	return sendJSON(w, http.StatusOK, &WebauthnRegisterStartResponse{
 		PublicKeyCredentialRequestOptions: options,
+		ChallengeID:                       challenge.ID,
+		FactorID:                          factor.ID,
 	})
 }
 

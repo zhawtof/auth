@@ -859,6 +859,9 @@ func (user *User) FindUnverifiedWebauthnFactor() *Factor {
 
 // HasUniqueFriendlyName checks if the friendly name is unique among the user's factors.
 func (user *User) HasUniqueFriendlyName(friendlyName string) bool {
+	if friendlyName == "" {
+		return true
+	}
 	for _, factor := range user.Factors {
 		if factor.FriendlyName == friendlyName {
 			return false

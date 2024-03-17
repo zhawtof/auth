@@ -19,9 +19,9 @@ type Challenge struct {
 	IPAddress  string     `json:"ip_address" db:"ip_address"`
 	Factor     *Factor    `json:"factor,omitempty" belongs_to:"factor"`
 	// TODO: Change these into enum maybe
-	ChallengeType     string `json:"challenge_type"`
-	WebauthnChallenge string `json:"webauthn_challenge"`
-	UserVerification  string `json:"user_verification"`
+	ChallengeType     string `json:"challenge_type" db:"challenge_type"`
+	WebauthnChallenge string `json:"webauthn_challenge" db:"webauthn_challenge"`
+	UserVerification  string `json:"user_verification" db:"user_verification"`
 }
 
 func (Challenge) TableName() string {
