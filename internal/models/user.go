@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/gobuffalo/pop/v6"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
@@ -827,6 +828,28 @@ func (u *User) SoftDeleteUserIdentities(tx *storage.Connection) error {
 		}
 	}
 	return nil
+}
+
+// Can't be changed.
+func (user *User) WebAuthnID() []byte {
+	return []byte(user.ID.String())
+}
+
+func (user *User) WebAuthnName() string {
+	return string(user.Email)
+}
+
+func (user *User) WebAuthnDisplayName() string {
+	return string(user.Email)
+}
+
+func (user *User) WebAuthnIcon() string {
+	return ""
+}
+
+func (user *User) WebAuthnCredentials() []webauthn.Credential {
+	// TODO: Fill out factors
+	return []webauthn.Credential{}
 }
 
 func obfuscateValue(id uuid.UUID, value string) string {

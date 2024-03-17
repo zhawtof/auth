@@ -223,15 +223,18 @@ func NewAPIWithVersion(ctx context.Context, globalConfig *conf.GlobalConfigurati
 
 			})
 			r.Route("/webauthn", func(r *router) {
-				r.Route("/register", func(r *router) {
-					r.Post("/begin", api.WebauthnRegisterStart)
-					r.Post("/end", api.WebauthnRegisterStart)
-				})
-				r.Route("/authenticate", func(r *router) {
-					r.Post("/begin", api.WebauthnAuthenticateStart)
-					r.Post("/end", api.WebauthnAuthenticateEnd)
+				r.Post("/", api.WebauthnRegisterStart)
+				r.Route("/{factor_id}", func(r *router) {
+					r.Use(api.loadFactor)
+					r.With(api.limitHandler(
+						tollbooth.NewLimiter(api.config.MFA.RateLimitChallengeAndVerify/60, &limiter.ExpirableOptions{
+							DefaultExpirationTTL: time.Minute,
+						}).SetBurst(30))).Post("/", api.WebauthnRegisterEnd)
+					r.Post("/login/start", api.WebauthnAuthenticateStart)
+					r.Post("/login/end", api.WebauthnAuthenticateEnd)
 
 				})
+
 			})
 		})
 

@@ -2,9 +2,11 @@ package models
 
 import (
 	"database/sql"
+	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	"github.com/supabase/auth/internal/storage"
+
 	"time"
 )
 
@@ -57,4 +59,41 @@ func (c *Challenge) HasExpired(expiryDuration float64) bool {
 
 func (c *Challenge) GetExpiryTime(expiryDuration float64) time.Time {
 	return c.CreatedAt.Add(time.Second * time.Duration(expiryDuration))
+}
+
+// Change so it convert To
+// func (c *Challenge) FromWebauthnRegistrationSession(factorID uuid.UUID, ipAddress string, session webauthn.SessionData) *c {
+
+// }
+
+func (c *Challenge) ToWebauthnRegistrationSession(factorID uuid.UUID, ipAddress string, session webauthn.SessionData) *webauthn.SessionData {
+	return nil
+	// id := uuid.Must(uuid.NewV4())
+	// return &Challenge {
+	// 	ID: id,
+	// 	FactorID: factorID,
+	// 	IPAddress: ipAddress,
+	// 	// TODO: Have the user sepcify this and add as param to fn
+	// 	// ChallengeType: "webauthn_registration",
+	// 	// WebauthnChallenge: "challenge_value",
+
+	// }
+
+}
+
+type WebauthnSession struct {
+	*webauthn.SessionData
+}
+
+func (ws *WebauthnSession) ToChallenge(factorID uuid.UUID, ipAddress string) *Challenge {
+	id := uuid.Must(uuid.NewV4())
+	return &Challenge{
+		ID:        id,
+		FactorID:  factorID,
+		IPAddress: ipAddress,
+		// 		// TODO: Have the user specify this and add as param to fn
+		// 		// ChallengeType: "webauthn_registration",
+		// 		 WebauthnChallenge: ws.Challenge,
+	}
+
 }

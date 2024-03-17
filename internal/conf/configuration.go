@@ -104,14 +104,15 @@ type JWTConfiguration struct {
 type WebauthnConfiguration struct {
 	Enabled bool `default:"false"`
 	// TODO: Come up with more sensible defaults for these
-	RPDisplayName string   `json:"rp_display_name" default:"Go Webauthn"`
-	RPID          string   `json:"rp_id" split_words:"true"`
+	RPDisplayName string   `json:"rp_display_name" split_words:"true" default:"Go Webauthn"`
+	RPID          string   `json:"rp_id"`
 	RPOrigins     []string `json:"rp_origins" split_words:"true"`
 	// TODO: Parse and set this from config
 	Webauthn *webauthn.WebAuthn `json:"overall_configuration" split_words:"true"`
 }
 
 func (w *WebauthnConfiguration) PopulateWebauthnConfiguration() error {
+	// TODO: Decide whether to remove since there's already vlaidation in .New at library level
 	if w.RPDisplayName == "" || w.RPID == "" || len(w.RPOrigins) == 0 {
 		return fmt.Errorf("display name, ID, and origins need to be populated")
 	}
@@ -139,7 +140,7 @@ type MFAConfiguration struct {
 	RateLimitChallengeAndVerify float64               `split_words:"true" default:"15"`
 	MaxEnrolledFactors          float64               `split_words:"true" default:"10"`
 	MaxVerifiedFactors          int                   `split_words:"true" default:"10"`
-	WebauthnConfiguration       WebauthnConfiguration `json:"webauth_configuration" split_words:"true"`
+	Webauthn                    WebauthnConfiguration `json:"webauthn" split_words:"true"`
 }
 
 type APIConfiguration struct {
@@ -604,8 +605,10 @@ func LoadGlobal(filename string) (*GlobalConfiguration, error) {
 		return nil, err
 	}
 
-	if config.MFA.Enabled && config.MFA.WebauthnConfiguration.Enabled {
-		if err := config.MFA.WebauthnConfiguration.PopulateWebauthnConfiguration(); err != nil {
+	fmt.Println("before config")
+	if config.MFA.Enabled && config.MFA.Webauthn.Enabled {
+		fmt.Println("COnfigu enalled")
+		if err := config.MFA.Webauthn.PopulateWebauthnConfiguration(); err != nil {
 			return nil, err
 		}
 	}

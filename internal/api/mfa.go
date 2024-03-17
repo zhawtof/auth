@@ -9,6 +9,7 @@ import (
 	"github.com/aaronarduino/goqrsvg"
 	svg "github.com/ajstarks/svgo"
 	"github.com/boombuler/barcode/qr"
+	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/gofrs/uuid"
 	"github.com/pquerna/otp/totp"
 	"github.com/supabase/auth/internal/hooks"
@@ -355,47 +356,57 @@ func (a *API) UnenrollFactor(w http.ResponseWriter, r *http.Request) error {
 }
 
 type WebauthnRegisterStartParams struct {
-	UserID                         uuid.UUID `json:"user_id"`
-	Domain                         string    `json:"domain"`
-	ReturnPasskeyCredentialOptions string    `json:"return_passkey_credential_options"`
+	UserID uuid.UUID `json:"user_id"`
+	// Domain                         string    `json:"domain"`
+	ReturnPasskeyCredentialOptions string `json:"return_passkey_credential_options"`
 }
 
 type WebauthnRegisterEndParams struct {
-	UserID    uuid.UUID `json:"user_id"`
-	PublicKey string    `json:"public_key"`
+	UserID      uuid.UUID `json:"user_id"`
+	ChallengeID uuid.UUID `json:"challenge_id"`
+	PublicKey   string    `json:"public_key"`
 }
 
 type WebauthnAuthenticateStartParams struct {
-	UserID                         uuid.UUID `json:"user_id"`
-	Domain                         string    `json:"domain"`
-	ReturnPasskeyCredentialOptions string    `json:"return_passkey_credential_options"`
+	UserID   uuid.UUID `json:"user_id"`
+	FactorID uuid.UUID `json:"factor_id"`
+	// ReturnPasskeyCredentialOptions string    `json:"return_passkey_credential_options"`
 }
 
 type WebauthnAuthenticateEndParams struct {
-	PublicKey string `json:"public_key"`
+	PublicKey string    `json:"public_key"`
+	FactorID  uuid.UUID `json:"factor_id"`
 }
 
 type WebauthnRegisterStartResponse struct {
+	// TODO: Fix the type
+	PublicKeyCredentialRequestOptions *protocol.CredentialCreation `json:"public_key_credential_request_options"`
+	ChallengeID                       uuid.UUID                    `json:"challenge_id"`
 	// TBD
 }
 
 type WebauthnRegisterFinishResponse struct {
+	FactorID uuid.UUID `json:"factor_id"`
 	// TBD
 }
 
 type WebauthnLoginStartResponse struct {
+	PublicKeyCredentialRequestOptions string `json:"public_key_credential_request_options"`
 	// TBD
 }
 
 type WebauthnLoginFinishResponse struct {
-	// TBD
+	AccessTokenResponse
+	FactorID uuid.UUID `json:"factor_id"`
 }
 
 func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) error {
-	// ctx := r.Context()
-	// user := getUser(ctx)
+	ctx := r.Context()
+	user := getUser(ctx)
 
-	// webAuthn := a.config.MFA.WebauthnConfiguration.Webauthn
+	// if user has duplicate friendly name check then raise error
+	webAuthn := a.config.MFA.Webauthn.Webauthn
+	// ipAddress := utilities.GetIPAddress(r)
 
 	// if params.ReturnPassKeyCredentialOptions {
 	// authSelect := protocol.AuthenticatorSelection{
@@ -407,22 +418,41 @@ func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) erro
 
 	//}
 	// else {
-	// options, session, err := webAuthn.BeginRegistration(user)
-	// if err != nil {
-	// 	return err
+	options, _, err := webAuthn.BeginRegistration(user)
+	if err != nil {
+		return err
+	}
+	// ws := &models.WebauthnSession{
+	// 	SessionData: session,
 	// }
+	// Open transaction
+	// TODO: Pass in friendly name
+	// factor := models.NewFactor(user,"myfriendlyname", "webauthn", models.FactorStateUnverified, "")
+	// Create Challenge
+	// challenge := ws.ToChallenge(factor.ID, ipAddress)
+	// Save Factor And Challenge
+	// We should extract the session into a challenge
 	//}
 
 	// Updating the ConveyencePreference options.
 	// See the struct declarations for values
 	// }
+	// Create a temporary factor which is unverified
+	// Create the challenge
 
-	return sendJSON(w, http.StatusOK, &WebauthnRegisterStartResponse{})
+	return sendJSON(w, http.StatusOK, &WebauthnRegisterStartResponse{
+		PublicKeyCredentialRequestOptions: options,
+	})
 }
 
 func (a *API) WebauthnRegisterEnd(w http.ResponseWriter, r *http.Request) error {
 	// ctx := r.Context()
 	// user := getUser(ctx)
+	// Maybe explicitly fetch the factor
+	// webauthn/enroll/
+	// webauthn/<factor_id>/
+	// webAuthn := a.config.MFA.WebauthnConfiguration.Webauthn
+	// session := challenge.ToSession()
 	// credential, err := webAuthn.FinishRegistration(user, session, r)
 	// if err != nil {
 	// return err
@@ -432,9 +462,13 @@ func (a *API) WebauthnRegisterEnd(w http.ResponseWriter, r *http.Request) error 
 }
 
 func (a *API) WebauthnAuthenticateStart(aw http.ResponseWriter, r *http.Request) error {
+	// /webauthn/authenticate
+	// /webauthn/
 	// ctx := r.Context()
 	// user := getUser(ctx)
+	// if factor is not verified or it is not a webauthn factor
 	// Check that factor exists, and is verified
+	// u
 	// options, session, err := webAuthn.BeginLogin(user)
 	// if err != nil {
 	// 	// Handle Error and return.
@@ -449,6 +483,7 @@ func (a *API) WebauthnAuthenticateEnd(w http.ResponseWriter, r *http.Request) er
 	// ctx := r.Context()
 	// user := getUser(ctx)
 	// Check that factor exists and is verified
+	// factor := getFactor(ctx) -> If
 	// options, session, err := webAuthn.FinishLogin(user)
 	// if err != nil {
 	// 	// Handle Error and return.
