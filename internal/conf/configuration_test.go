@@ -208,3 +208,47 @@ func TestValidateExtensibilityPointSecrets(t *testing.T) {
 	}
 
 }
+
+func TestPopulateWebauthnConfiguration(t *testing.T) {
+	tests := []struct {
+		name          string
+		config        WebauthnConfiguration
+		expectError   bool
+		expectedError string
+	}{
+		{
+			name: "valid configuration",
+			config: WebauthnConfiguration{
+				Enabled:       true,
+				RPDisplayName: "Go Webauthn",
+				RPID:          "localhost",
+				RPOrigins:     []string{"http://localhost"},
+			},
+			expectError: false,
+		},
+		{
+			name: "missing RPDisplayName",
+			config: WebauthnConfiguration{
+				Enabled:   true,
+				RPID:      "localhost",
+				RPOrigins: []string{"http://localhost"},
+			},
+			expectError:   true,
+			expectedError: "display name, ID, and origins need to be populated",
+		},
+		// Add more test cases for missing RPID, RPOrigins, etc.
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.config.PopulateWebauthnConfiguration()
+			if tc.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, tc.config.Webauthn)
+			}
+		})
+	}
+}
