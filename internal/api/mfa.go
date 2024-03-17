@@ -359,6 +359,7 @@ type WebauthnRegisterStartParams struct {
 	UserID uuid.UUID `json:"user_id"`
 	// Domain                         string    `json:"domain"`
 	ReturnPasskeyCredentialOptions string `json:"return_passkey_credential_options"`
+	FriendlyName                   string `json:"friendly_name"`
 }
 
 type WebauthnRegisterEndParams struct {
@@ -391,7 +392,7 @@ type WebauthnRegisterFinishResponse struct {
 }
 
 type WebauthnLoginStartResponse struct {
-	PublicKeyCredentialRequestOptions string `json:"public_key_credential_request_options"`
+	PublicKeyCredentialRequestOptions *protocol.CredentialAssertion `json:"public_key_credential_request_options"`
 	// TBD
 }
 
@@ -404,9 +405,18 @@ func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) erro
 	ctx := r.Context()
 	user := getUser(ctx)
 
+	params := &WebauthnRegisterStartParams{}
+	if err := retrieveRequestParams(r, params); err != nil {
+		return err
+	}
+
 	// if user has duplicate friendly name check then raise error
 	webAuthn := a.config.MFA.Webauthn.Webauthn
 	ipAddress := utilities.GetIPAddress(r)
+	// TODO: Check for duplicate factor etc
+	if !user.HasUniqueFriendlyName(params.FriendlyName) {
+		return internalServerError("another factor with same friendly name exists")
+	}
 
 	// if params.ReturnPassKeyCredentialOptions {
 	// authSelect := protocol.AuthenticatorSelection{
@@ -425,12 +435,17 @@ func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) erro
 	ws := &models.WebauthnSession{
 		SessionData: session,
 	}
+	// if user.FindUnverifiedWebauthnFactor() != nil {
+	// Maybe reuse the factor and find a way to create new challenge
+	// Reuse the existing unverified Webauthn factor if there is one, else create new one
+	// if user.HasExistingWebauthnFactor {
+	// }
 	// Open transaction
-	// TODO: Pass in friendly name
 	err = a.db.Transaction(func(tx *storage.Connection) error {
-		factor := models.NewFactor(user, "myfriendlyname", "webauthn", models.FactorStateUnverified, "")
-		// Create Challenge
-		challenge := ws.ToChallenge(factor.ID, ipAddress)
+
+		factor := models.NewFactor(user, params.FriendlyName, "webauthn", models.FactorStateUnverified, "")
+		// }
+		challenge := ws.ToChallenge(factor.ID, ipAddress, "webauthn_registration")
 		if terr := tx.Create(factor); err != nil {
 			return terr
 		}
@@ -453,54 +468,83 @@ func (a *API) WebauthnRegisterStart(w http.ResponseWriter, r *http.Request) erro
 }
 
 func (a *API) WebauthnRegisterEnd(w http.ResponseWriter, r *http.Request) error {
-	// ctx := r.Context()
-	// user := getUser(ctx)
-	// factor := getFactor(ctx)
-	// if factor.FactorType != "webauthn" {
-	// 	return internalServerError("webautnn only")
-	// }
-	// TODO: Probably add some factor checks here
-	// webAuthn := a.config.MFA.Webauthn.Webauthn
-	// challenge := models.FindChallengeByID(a.db, params.ChallengeID)
-	// s
-	// session := challenge.ToSession()
-	// credential, err := webAuthn.FinishRegistration(user, session, r)
-	// if err != nil {
-	// return err
-	// }
-	// TODO: update factor state to verified in a
-	return nil
+	ctx := r.Context()
+	user := getUser(ctx)
+	factor := getFactor(ctx)
+	config := a.config
+
+	// TODO: Probably add some factor checks here.
+	if factor.FactorType != "webauthn" && !(factor.Status == models.FactorStateUnverified.String()) {
+		return internalServerError("not a valid unregistered webauthn factor")
+	}
+	params := &WebauthnRegisterEndParams{}
+	if err := retrieveRequestParams(r, params); err != nil {
+		return err
+	}
+	webAuthn := a.config.MFA.Webauthn.Webauthn
+	challenge, err := models.FindChallengeByID(a.db, params.ChallengeID)
+	if err != nil {
+		return err
+	}
+	// Maybe check for IP address
+	// There is an implicit assumption about UserID here since we know how User.ID is constructed
+	session := challenge.ToSession(user.ID, config.MFA.ChallengeExpiryDuration)
+	credential, err := webAuthn.FinishRegistration(user, session, r)
+	if err != nil {
+		return err
+	}
+	// Save additional Credentials?
+	if err := factor.VerifyWebauthnFactor(a.db, models.FactorStateVerified, credential); err != nil {
+		return err
+	}
+
+	return sendJSON(w, http.StatusOK, &WebauthnRegisterFinishResponse{
+		FactorID: factor.ID,
+	})
 }
 
-func (a *API) WebauthnAuthenticateStart(aw http.ResponseWriter, r *http.Request) error {
-	// /webauthn/authenticate
-	// /webauthn/
-	// ctx := r.Context()
-	// user := getUser(ctx)
-	// if factor is not verified or it is not a webauthn factor
-	// Check that factor exists, and is verified
-	// u
-	// options, session, err := webAuthn.BeginLogin(user)
-	// if err != nil {
-	// 	// Handle Error and return.
-	// 	 Allowlist can be added here
+func (a *API) WebauthnAuthenticateStart(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	user := getUser(ctx)
+	factor := getFactor(ctx)
+	ipAddress := utilities.GetIPAddress(r)
 
-	// 	return err
-	// }
-	return nil
+	if factor.FactorType != "webauthn" && !(factor.Status == models.FactorStateVerified.String()) {
+		return internalServerError("not a valid unregistered webauthn factor")
+	}
+	webAuthn := a.config.MFA.Webauthn.Webauthn
+	// if factor is not verified or it is not a webauthn factor thenreturn
+	options, session, err := webAuthn.BeginLogin(user)
+	if err != nil {
+		return err
+	}
+	ws := &models.WebauthnSession{
+		SessionData: session,
+	}
+	challenge := ws.ToChallenge(factor.ID, ipAddress, "webauthn_authentication")
+	if err := a.db.Create(challenge); err != nil {
+		return err
+	}
+
+	return sendJSON(w, http.StatusOK, &WebauthnLoginStartResponse{
+		PublicKeyCredentialRequestOptions: options,
+	})
 }
 
 func (a *API) WebauthnAuthenticateEnd(w http.ResponseWriter, r *http.Request) error {
 	// ctx := r.Context()
 	// user := getUser(ctx)
 	// Check that factor exists and is verified
-	// factor := getFactor(ctx) -> If
-	// options, session, err := webAuthn.FinishLogin(user)
+	// factor := getFactor(ctx)
+
+	// webAuthn := a.config.MFA.Webauthn.Webauthn
+	// credential, err := webAuthn.FinishLogin(user)
 	// if err != nil {
-	// 	// Handle Error and return.
-	// 	return err
+	//  	// Handle Error and return.
+	//  	return err
 	// }
 	// Update Factor here
 	// Update the AAL level depending on passkey or non passkey
+	// Return session
 	return nil
 }

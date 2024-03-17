@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/gobuffalo/pop/v6"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
@@ -38,6 +39,7 @@ const (
 	PasswordGrant
 	OTP
 	TOTPSignIn
+	WebauthnMFA
 	SSOSAML
 	Recovery
 	Invite
@@ -74,6 +76,8 @@ func (authMethod AuthenticationMethod) String() string {
 		return "token_refresh"
 	case Anonymous:
 		return "anonymous"
+	case WebauthnMFA:
+		return "webauthn/mfa"
 	}
 	return ""
 }
@@ -182,6 +186,13 @@ func (f *Factor) UpdateFriendlyName(tx *storage.Connection, friendlyName string)
 func (f *Factor) UpdateStatus(tx *storage.Connection, state FactorState) error {
 	f.Status = state.String()
 	return tx.UpdateOnly(f, "status", "updated_at")
+}
+func (f *Factor) VerifyWebauthnFactor(tx *storage.Connection, state FactorState, credential *webauthn.Credential) error {
+	if err := f.UpdateStatus(tx, FactorStateVerified); err != nil {
+		return err
+	}
+	// TODO: update the other fields too
+	return nil
 }
 
 // UpdateFactorType modifies the factor type

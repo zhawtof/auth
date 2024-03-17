@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
@@ -70,33 +71,27 @@ func (c *Challenge) GetExpiryTime(expiryDuration float64) time.Time {
 
 // }
 
-func (c *Challenge) ToWebauthnRegistrationSession(factorID uuid.UUID, ipAddress string, session webauthn.SessionData) *webauthn.SessionData {
-	return nil
-	// id := uuid.Must(uuid.NewV4())
-	// return &Challenge {
-	// 	ID: id,
-	// 	FactorID: factorID,
-	// 	IPAddress: ipAddress,
-	// 	// TODO: Have the user sepcify this and add as param to fn
-	// 	// ChallengeType: "webauthn_registration",
-	// 	// WebauthnChallenge: "challenge_value",
-
-	// }
-
+func (c *Challenge) ToSession(userID uuid.UUID, challengeExpiryDuration float64) webauthn.SessionData {
+	return webauthn.SessionData{
+		Challenge:        c.WebauthnChallenge,
+		UserID:           []byte(userID.String()),
+		Expires:          c.GetExpiryTime(challengeExpiryDuration),
+		UserVerification: protocol.UserVerificationRequirement(c.UserVerification),
+	}
 }
 
 type WebauthnSession struct {
 	*webauthn.SessionData
 }
 
-func (ws *WebauthnSession) ToChallenge(factorID uuid.UUID, ipAddress string) *Challenge {
+func (ws *WebauthnSession) ToChallenge(factorID uuid.UUID, ipAddress string, challengeType string) *Challenge {
 	id := uuid.Must(uuid.NewV4())
 	return &Challenge{
 		ID:        id,
 		FactorID:  factorID,
 		IPAddress: ipAddress,
 		// TODO: Have the user specify this and add as param to fn
-		ChallengeType:     "webauthn_registration",
+		ChallengeType:     challengeType,
 		UserVerification:  "preferred",
 		WebauthnChallenge: ws.Challenge,
 	}

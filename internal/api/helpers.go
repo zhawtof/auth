@@ -96,6 +96,10 @@ type RequestParams interface {
 		VerifyFactorParams |
 		VerifyParams |
 		adminUserUpdateFactorParams |
+		WebauthnRegisterStartParams |
+		WebauthnRegisterEndParams |
+		WebauthnAuthenticateStartParams |
+		WebauthnAuthenticateEndParams |
 		struct {
 			Email string `json:"email"`
 			Phone string `json:"phone"`

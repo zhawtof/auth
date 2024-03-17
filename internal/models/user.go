@@ -847,6 +847,26 @@ func (user *User) WebAuthnIcon() string {
 	return ""
 }
 
+func (user *User) FindUnverifiedWebauthnFactor() *Factor {
+	// if no factors ill just pass
+	for _, factor := range user.Factors {
+		if factor.FactorType == "webauthn" && factor.Status == FactorStateUnverified.String() {
+			return &factor
+		}
+	}
+	return nil
+}
+
+// HasUniqueFriendlyName checks if the friendly name is unique among the user's factors.
+func (user *User) HasUniqueFriendlyName(friendlyName string) bool {
+	for _, factor := range user.Factors {
+		if factor.FriendlyName == friendlyName {
+			return false
+		}
+	}
+	return true
+}
+
 func (user *User) WebAuthnCredentials() []webauthn.Credential {
 	// TODO: Fill out factors
 	return []webauthn.Credential{}
