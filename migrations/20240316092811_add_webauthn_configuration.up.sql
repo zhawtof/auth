@@ -15,9 +15,9 @@ create table if not exists {{ index .Options "Namespace" }}.webauthn_factor_info
 );
 
 -- TODO: Add constraint so that these constraints can only be used when challenge type is webauthn
-alter table {{ index .Options "Namespace" }}.mfa_challenges add column if not exists challenge_type challenge_type;
-alter table {{ index .Options "Namespace" }}.mfa_challenges add column if not exists webauthn_challenge text;
-alter table {{ index .Options "Namespace" }}.mfa_challenges add column if not exists user_verification user_verification;
+alter table {{ index .Options "Namespace" }}.mfa_challenges add column if not exists challenge_type challenge_type null;
+alter table {{ index .Options "Namespace" }}.mfa_challenges add column if not exists webauthn_challenge text null;
+alter table {{ index .Options "Namespace" }}.mfa_challenges add column if not exists user_verification user_verification null;
 
 
 

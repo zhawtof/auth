@@ -98,8 +98,8 @@ type RequestParams interface {
 		adminUserUpdateFactorParams |
 		WebauthnRegisterStartParams |
 		WebauthnRegisterEndParams |
-		WebauthnAuthenticateStartParams |
-		WebauthnAuthenticateEndParams |
+		WebauthnLoginStartParams |
+		WebauthnLoginEndParams |
 		struct {
 			Email string `json:"email"`
 			Phone string `json:"phone"`

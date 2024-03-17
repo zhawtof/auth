@@ -191,7 +191,7 @@ func (f *Factor) VerifyWebauthnFactor(tx *storage.Connection, state FactorState,
 	if err := f.UpdateStatus(tx, FactorStateVerified); err != nil {
 		return err
 	}
-	// TODO: update the other fields too
+	// TODO: update public key etc
 	return nil
 }
 

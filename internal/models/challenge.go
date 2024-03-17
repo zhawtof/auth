@@ -36,6 +36,10 @@ func NewChallenge(factor *Factor, ipAddress string) *Challenge {
 		ID:        id,
 		FactorID:  factor.ID,
 		IPAddress: ipAddress,
+		// TODO: adjust this to handle the various challenge types
+		ChallengeType: TOTPSignIn.String(),
+		// TODO: delete this, it is a hack
+		UserVerification: "preferred",
 	}
 	return challenge
 }
@@ -66,11 +70,6 @@ func (c *Challenge) GetExpiryTime(expiryDuration float64) time.Time {
 	return c.CreatedAt.Add(time.Second * time.Duration(expiryDuration))
 }
 
-// Change so it convert To
-// func (c *Challenge) FromWebauthnRegistrationSession(factorID uuid.UUID, ipAddress string, session webauthn.SessionData) *c {
-
-// }
-
 func (c *Challenge) ToSession(userID uuid.UUID, challengeExpiryDuration float64) webauthn.SessionData {
 	return webauthn.SessionData{
 		Challenge:        c.WebauthnChallenge,
@@ -87,10 +86,9 @@ type WebauthnSession struct {
 func (ws *WebauthnSession) ToChallenge(factorID uuid.UUID, ipAddress string, challengeType string) *Challenge {
 	id := uuid.Must(uuid.NewV4())
 	return &Challenge{
-		ID:        id,
-		FactorID:  factorID,
-		IPAddress: ipAddress,
-		// TODO: Have the user specify this and add as param to fn
+		ID:                id,
+		FactorID:          factorID,
+		IPAddress:         ipAddress,
 		ChallengeType:     challengeType,
 		UserVerification:  "preferred",
 		WebauthnChallenge: ws.Challenge,

@@ -847,6 +847,11 @@ func (user *User) WebAuthnIcon() string {
 	return ""
 }
 
+func (user *User) WebAuthnCredentials() []webauthn.Credential {
+	// TODO: Look through factors, select webauthn factors and  write a factor.ToCredential() which filters out id and type
+	return []webauthn.Credential{}
+}
+
 func (user *User) FindUnverifiedWebauthnFactor() *Factor {
 	// if no factors ill just pass
 	for _, factor := range user.Factors {
@@ -868,11 +873,6 @@ func (user *User) HasUniqueFriendlyName(friendlyName string) bool {
 		}
 	}
 	return true
-}
-
-func (user *User) WebAuthnCredentials() []webauthn.Credential {
-	// TODO: Fill out factors
-	return []webauthn.Credential{}
 }
 
 func obfuscateValue(id uuid.UUID, value string) string {

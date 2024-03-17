@@ -368,15 +368,16 @@ type WebauthnRegisterEndParams struct {
 	PublicKey   string    `json:"public_key"`
 }
 
-type WebauthnAuthenticateStartParams struct {
+type WebauthnLoginStartParams struct {
 	UserID   uuid.UUID `json:"user_id"`
 	FactorID uuid.UUID `json:"factor_id"`
 	// ReturnPasskeyCredentialOptions string    `json:"return_passkey_credential_options"`
 }
 
-type WebauthnAuthenticateEndParams struct {
-	PublicKey string    `json:"public_key"`
-	FactorID  uuid.UUID `json:"factor_id"`
+type WebauthnLoginEndParams struct {
+	PublicKey   string    `json:"public_key"`
+	FactorID    uuid.UUID `json:"factor_id"`
+	ChallengeID uuid.UUID `json:"challenge_id"`
 }
 
 type WebauthnRegisterStartResponse struct {
@@ -397,7 +398,7 @@ type WebauthnLoginStartResponse struct {
 	// TBD
 }
 
-type WebauthnLoginFinishResponse struct {
+type WebauthnLoginEndResponse struct {
 	AccessTokenResponse
 	FactorID uuid.UUID `json:"factor_id"`
 }
@@ -500,6 +501,7 @@ func (a *API) WebauthnRegisterEnd(w http.ResponseWriter, r *http.Request) error 
 	if err := factor.VerifyWebauthnFactor(a.db, models.FactorStateVerified, credential); err != nil {
 		return err
 	}
+	// TODO: Delete the challenge here and potentially unverified factors, though it's betst if we don't have any of those
 
 	return sendJSON(w, http.StatusOK, &WebauthnRegisterFinishResponse{
 		FactorID: factor.ID,
@@ -511,6 +513,11 @@ func (a *API) WebauthnAuthenticateStart(w http.ResponseWriter, r *http.Request) 
 	user := getUser(ctx)
 	factor := getFactor(ctx)
 	ipAddress := utilities.GetIPAddress(r)
+
+	params := &WebauthnLoginStartParams{}
+	if err := retrieveRequestParams(r, params); err != nil {
+		return err
+	}
 
 	if factor.FactorType != "webauthn" && !(factor.Status == models.FactorStateVerified.String()) {
 		return internalServerError("not a valid unregistered webauthn factor")
@@ -535,19 +542,55 @@ func (a *API) WebauthnAuthenticateStart(w http.ResponseWriter, r *http.Request) 
 }
 
 func (a *API) WebauthnAuthenticateEnd(w http.ResponseWriter, r *http.Request) error {
-	// ctx := r.Context()
-	// user := getUser(ctx)
+	ctx := r.Context()
+	user := getUser(ctx)
+	config := a.config
 	// Check that factor exists and is verified
-	// factor := getFactor(ctx)
+	factor := getFactor(ctx)
+	// TODO: abstract into function
+	if factor.FactorType != "webauthn" && !(factor.Status == models.FactorStateVerified.String()) {
+		return internalServerError("not a valid unregistered webauthn factor")
+	}
+	params := &WebauthnLoginEndParams{}
+	if err := retrieveRequestParams(r, params); err != nil {
+		return err
+	}
 
-	// webAuthn := a.config.MFA.Webauthn.Webauthn
-	// credential, err := webAuthn.FinishLogin(user)
-	// if err != nil {
-	//  	// Handle Error and return.
-	//  	return err
-	// }
-	// Update Factor here
-	// Update the AAL level depending on passkey or non passkey
-	// Return session
-	return nil
+	webAuthn := a.config.MFA.Webauthn.Webauthn
+	challenge, err := models.FindChallengeByID(a.db, params.ChallengeID)
+	if err != nil {
+		return err
+	}
+	session := challenge.ToSession(user.ID, config.MFA.ChallengeExpiryDuration)
+
+	_, err = webAuthn.FinishLogin(user, session, r)
+	if err != nil {
+		return err
+	}
+	var token *AccessTokenResponse
+
+	err = a.db.Transaction(func(tx *storage.Connection) error {
+		// TODO: maybe modify to update the AAL level depending on passkey or non passkey. Right now defaults to AAL2
+		token, terr := a.updateMFASessionAndClaims(r, tx, user, models.TOTPSignIn, models.GrantParams{
+			FactorID: &factor.ID,
+		})
+		if terr != nil {
+			return terr
+		}
+		if terr = a.setCookieTokens(config, token, false, w); terr != nil {
+			return internalServerError("Failed to set JWT cookie. %s", terr)
+		}
+		if terr = models.InvalidateSessionsWithAALLessThan(tx, user.ID, models.AAL2.String()); terr != nil {
+			return internalServerError("Failed to update sessions. %s", terr)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	// Update Factor here if we want to use the login counter feature
+	metering.RecordLogin(string(models.MFACodeLoginAction), user.ID)
+
+	return sendJSON(w, http.StatusOK, token)
+
 }
