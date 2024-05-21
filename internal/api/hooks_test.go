@@ -107,7 +107,7 @@ func (ts *HooksTestSuite) TestRunHTTPHook() {
 
 			var output hooks.SendSMSOutput
 			req, _ := http.NewRequest("POST", ts.Config.Hook.SendSMS.URI, nil)
-			body, err := ts.API.runHTTPHook(req, ts.Config.Hook.SendSMS, &input, &output)
+			body, err := ts.API.runHTTPHook(req, ts.Config.Hook.SendSMS, &input)
 
 			if !tc.expectError {
 				require.NoError(ts.T(), err)
@@ -155,7 +155,7 @@ func (ts *HooksTestSuite) TestShouldRetryWithRetryAfterHeader() {
 	req, err := http.NewRequest("POST", "http://localhost:9998/otp", nil)
 	require.NoError(ts.T(), err)
 
-	body, err := ts.API.runHTTPHook(req, ts.Config.Hook.SendSMS, &input, &output)
+	body, err := ts.API.runHTTPHook(req, ts.Config.Hook.SendSMS, &input)
 	require.NoError(ts.T(), err)
 
 	err = json.Unmarshal(body, &output)
@@ -184,12 +184,10 @@ func (ts *HooksTestSuite) TestShouldReturnErrorForNonJSONContentType() {
 		Reply(http.StatusOK).
 		SetHeader("content-type", "text/plain")
 
-	var output hooks.SendSMSOutput
-
 	req, err := http.NewRequest("POST", "http://localhost:9999/otp", nil)
 	require.NoError(ts.T(), err)
 
-	_, err = ts.API.runHTTPHook(req, ts.Config.Hook.SendSMS, &input, &output)
+	_, err = ts.API.runHTTPHook(req, ts.Config.Hook.SendSMS, &input)
 	require.Error(ts.T(), err, "Expected an error due to wrong content type")
 	require.Contains(ts.T(), err.Error(), "Invalid JSON response.")
 

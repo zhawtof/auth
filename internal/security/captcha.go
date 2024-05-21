@@ -32,7 +32,7 @@ type VerificationResponse struct {
 var Client *http.Client
 
 func init() {
-	var defaultTimeout time.Duration = time.Second * 10
+	var defaultTimeout = time.Second * 10
 	timeoutStr := os.Getenv("GOTRUE_SECURITY_CAPTCHA_TIMEOUT")
 	if timeoutStr != "" {
 		if timeout, err := time.ParseDuration(timeoutStr); err != nil {

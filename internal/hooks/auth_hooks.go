@@ -10,10 +10,6 @@ import (
 type HookType string
 
 const (
-	PostgresHook HookType = "pg-functions"
-)
-
-const (
 	// In Miliseconds
 	DefaultTimeout = 2000
 )

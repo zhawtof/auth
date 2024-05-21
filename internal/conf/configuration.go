@@ -18,8 +18,8 @@ import (
 
 const defaultMinPasswordLength int = 6
 const defaultChallengeExpiryDuration float64 = 300
-const defaultFactorExpiryDuration time.Duration = 300 * time.Second
-const defaultFlowStateExpiryDuration time.Duration = 300 * time.Second
+const defaultFactorExpiryDuration = 300 * time.Second
+const defaultFlowStateExpiryDuration = 300 * time.Second
 
 // See: https://www.postgresql.org/docs/7.0/syntax525.htm
 var postgresNamesRegexp = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]{0,62}$`)

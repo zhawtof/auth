@@ -24,7 +24,6 @@ const (
 	factorKey               = contextKey("factor")
 	sessionKey              = contextKey("session")
 	externalReferrerKey     = contextKey("external_referrer")
-	functionHooksKey        = contextKey("function_hooks")
 	adminUserKey            = contextKey("admin_user")
 	oauthTokenKey           = contextKey("oauth_token") // for OAuth1.0, also known as request token
 	oauthVerifierKey        = contextKey("oauth_verifier")

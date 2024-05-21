@@ -490,12 +490,6 @@ func (u *User) Recover(tx *storage.Connection) error {
 	return ClearAllOneTimeTokensForUser(tx, u.ID)
 }
 
-// CountOtherUsers counts how many other users exist besides the one provided
-func CountOtherUsers(tx *storage.Connection, id uuid.UUID) (int, error) {
-	userCount, err := tx.Q().Where("instance_id = ? and id != ?", uuid.Nil, id).Count(&User{})
-	return userCount, errors.Wrap(err, "error finding registered users")
-}
-
 func findUser(tx *storage.Connection, query string, args ...interface{}) (*User, error) {
 	obj := &User{}
 	if err := tx.Eager().Q().Where(query, args...).First(obj); err != nil {

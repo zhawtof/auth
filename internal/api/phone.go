@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"net/http"
 	"regexp"
 	"strings"
@@ -44,13 +43,13 @@ func formatPhoneNumber(phone string) string {
 }
 
 // sendPhoneConfirmation sends an otp to the user's phone number
-func (a *API) sendPhoneConfirmation(ctx context.Context, r *http.Request, tx *storage.Connection, user *models.User, phone, otpType string, smsProvider sms_provider.SmsProvider, channel string) (string, error) {
+func (a *API) sendPhoneConfirmation(r *http.Request, tx *storage.Connection, user *models.User, phone, otpType string, smsProvider sms_provider.SmsProvider, channel string) (string, error) {
 	config := a.config
 
 	var token *string
 	var sentAt *time.Time
 
-	includeFields := []string{}
+	var includeFields []string
 	switch otpType {
 	case phoneChangeVerification:
 		token = &user.PhoneChangeToken
